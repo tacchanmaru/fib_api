@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.main import app
+from main import app
 
 client = TestClient(app)
 
@@ -20,19 +20,30 @@ def test_fibonacci_valid():
 def test_fibonacci_no_query():
     response = client.get("/fib")
     assert response.status_code == 422
+    assert response.json() == {"status": 422, "message": "need query parameter n"}
 
 # nが正の整数でない場合のテスト
 
 def test_fibonacci_non_int():
     response = client.get("/fib?n=string")
     assert response.status_code == 422
+    assert response.json() == {"status": 422, "message": "n must be PositiveInt"}
 
 def test_fibonacci_non_positive_int():
     response = client.get("/fib?n=-1")
     assert response.status_code == 400
+    assert response.json() == {"status": 422, "message": "n must be PositiveInt"}
 
     response = client.get("/fib?n=0")
     assert response.status_code == 400
+    assert response.json() == {"status": 422, "message": "n must be PositiveInt"}
+
+# 計算結果が桁数制限を超えた場合のテスト
+
+def test_fibonacci_overflow():
+    response = client.get("/fib?n=30000")
+    assert response.status_code == 400
+    assert response.json() == {"status": 400, "message": "The number has exceeded the maximum allowed digits"}
 
 # リクエストされたパスが見つからない場合のテスト
 
